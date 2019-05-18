@@ -1,5 +1,10 @@
-const int trigPin = 5;
-const int echoPin = 6;
+const int trigPin1 = 5;
+const int echoPin1 = 6;
+
+const int trigPin2 = 8;
+const int echoPin2 = 9;
+
+const int led = 11;
 
 const int left_digit = 2;
 const int right_digit = 3;
@@ -22,13 +27,16 @@ void setup() {
   pinMode(dA1, OUTPUT);
   pinMode(dA2, OUTPUT);
   pinMode(pk, OUTPUT);
+
+  pinMode(led, OUTPUT);
+
   
   pinMode(left_digit, OUTPUT);
   pinMode(right_digit, OUTPUT);
   
-  pinMode(trigPin, OUTPUT);
-  digitalWrite(trigPin, LOW); 
-  pinMode(echoPin, INPUT);
+  pinMode(trigPin1, OUTPUT);
+  digitalWrite(trigPin1, LOW); 
+  pinMode(echoPin1, INPUT);
 
   hide_pk();
 }
@@ -77,6 +85,14 @@ void show_pk(){
 
 void hide_pk(){
   digitalWrite(pk,LOW);
+}
+
+void ledOn(){
+    digitalWrite(led,HIGH);
+}
+
+void ledOff(){
+    digitalWrite(led,LOW);
 }
 
 void show_digit(int digit){
@@ -169,16 +185,17 @@ void show_left_digit(){
 
 void show_number(int number){
   if(number < 10 && number >=0){
-//    show_green()     
+    ledOf();
     show_right_digit();
     show_digit(number);
     show_left_digit();
     show_digit(0);
   }else if (number >99 || number < 0){
-//    show_red()
+    ledOn();
     places=0;
+    
   }else{
-//    show_green()
+    ledOf();
     show_right_digit();
     show_digit(number%10);
     show_left_digit();
@@ -186,14 +203,30 @@ void show_number(int number){
   }
 }
 
-void loop() {
-  show_number(places);
-  digitalWrite(trigPin, LOW);
+checkIn(){
+  digitalWrite(trigPin1, LOW);
   delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
+  digitalWrite(trigPin1, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
+  digitalWrite(trigPin1, LOW);
+  duration = pulseIn(echoPin1, HIGH);
+  Serial.print("Duration - ");
+  Serial.println(duration);
+  cm = duration*0.034/2;
+  Serial.print("Cm - ");
+  Serial.println(cm);
+
+ if(cm<5)
+    places--;
+}
+
+checkOut(){
+  digitalWrite(trigPin1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin1, LOW);
+  duration = pulseIn(echoPin1, HIGH);
   Serial.print("Duration - ");
   Serial.println(duration);
   cm = duration*0.034/2;
@@ -204,3 +237,8 @@ void loop() {
     places++;
 }
 
+void loop() {
+  show_number(places);    
+  checkIn();
+  checkOut();
+}

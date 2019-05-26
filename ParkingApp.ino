@@ -1,24 +1,25 @@
 const int trigPin1 = 5;
 const int echoPin1 = 6;
 
-const int trigPin2 = 8;
-const int echoPin2 = 9;
+const int trigPin2 = 9;
+const int echoPin2 = 8;
 
 const int led = 11;
 
 const int left_digit = 2;
 const int right_digit = 3;
 
-const int pk = 7;
+const int pk = 1;
 
 const int dA0= 11;
 const int dA1= 12;
 const int dA2= 13;
 
-long duration;
-int cm;
+int places = 1;
+int beforeOutCm;
+int beforeInCm;
+const int buzzer = 10;
 
-int places = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -30,7 +31,8 @@ void setup() {
 
   pinMode(led, OUTPUT);
 
-  
+  pinMode(buzzer, OUTPUT); 
+
   pinMode(left_digit, OUTPUT);
   pinMode(right_digit, OUTPUT);
   
@@ -38,6 +40,10 @@ void setup() {
   digitalWrite(trigPin1, LOW); 
   pinMode(echoPin1, INPUT);
 
+  
+  pinMode(trigPin2, OUTPUT);
+  digitalWrite(trigPin2, LOW); 
+  pinMode(echoPin2, INPUT);
   hide_pk();
 }
 
@@ -185,17 +191,18 @@ void show_left_digit(){
 
 void show_number(int number){
   if(number < 10 && number >=0){
-    ledOf();
+    ledOff();
     show_right_digit();
     show_digit(number);
     show_left_digit();
     show_digit(0);
   }else if (number >99 || number < 0){
     ledOn();
-    places=0;
-    
+    if(number<0)
+      show_digit(0);
+//    places=0;s
   }else{
-    ledOf();
+    ledOff();
     show_right_digit();
     show_digit(number%10);
     show_left_digit();
@@ -203,42 +210,54 @@ void show_number(int number){
   }
 }
 
-checkIn(){
+void checkIn(){
+  long duration;
+  int cm;
   digitalWrite(trigPin1, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin1, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin1, LOW);
   duration = pulseIn(echoPin1, HIGH);
-  Serial.print("Duration - ");
-  Serial.println(duration);
   cm = duration*0.034/2;
-  Serial.print("Cm - ");
+  Serial.print(" IN - ");
   Serial.println(cm);
 
- if(cm<5)
+ if(cm>10 && beforeInCm<10){
     places--;
+    if(places <= 0){
+        tone(buzzer, 1000); // Send 1KHz sound signal...
+        delay(10);        // ...for 1 sec
+        noTone(buzzer);     // Stop sound...
+      }
+  }
+  
+  beforeInCm = cm;
 }
 
-checkOut(){
-  digitalWrite(trigPin1, LOW);
+void checkOut(){
+  long duration;
+  int cm;
+  digitalWrite(trigPin2, LOW);
   delayMicroseconds(2);
-  digitalWrite(trigPin1, HIGH);
+  digitalWrite(trigPin2, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin1, LOW);
-  duration = pulseIn(echoPin1, HIGH);
-  Serial.print("Duration - ");
-  Serial.println(duration);
+  digitalWrite(trigPin2, LOW);
+  duration = pulseIn(echoPin2, HIGH);
   cm = duration*0.034/2;
-  Serial.print("Cm - ");
+  Serial.print("OUT - ");
   Serial.println(cm);
 
- if(cm<5)
+ if(cm>10 && beforeOutCm<10)
     places++;
+   beforeOutCm = cm;
 }
 
 void loop() {
   show_number(places);    
   checkIn();
   checkOut();
+  Serial.print("Places - ");
+  Serial.println(places);  Serial.println();
+
 }
